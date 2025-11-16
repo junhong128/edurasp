@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EduRasp | Practice</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            margin: 0;
+            padding: 40px;
+            background-color: #E0E0E0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            box-sizing: border-box;
+        }
+
+        .device-container {
+            width: 375px;
+            background-color: #2C3E50;
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            box-sizing: border-box;
+        }
+
+        .screen {
+            background-color: #FDF5E6;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .app-header {
+            background-color: #EAAA7A;
+            color: white;
+            padding: 15px 0;
+            text-align: center;
+        }
+
+        .app-header h1 {
+            margin: 0;
+            font-size: 24px;
+        }
+
+        .sub-header {
+            background-color: #FAD7A0;
+            color: #333;
+            padding: 8px 0;
+            text-align: center;
+            font-size: 16px;
+            font-weight: 500;
+        }
+
+        .content {
+            padding: 25px;
+        }
+
+        .question-text {
+            font-size: 28px;
+            font-weight: bold;
+            text-align: center;
+            color: #333;
+            margin: 10px 0 25px 0;
+        }
+
+        .answer-options {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .btn {
+            display: block;
+            width: 100%;
+            padding: 18px;
+            font-size: 20px;
+            font-weight: 600;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            box-sizing: border-box;
+            transition: transform 0.1s ease;
+        }
+
+        .btn:hover {
+            opacity: 0.9;
+        }
+        .btn:active {
+            transform: scale(0.98);
+        }
+
+        .answer-btn {
+            background-color: #F5EAAA;
+            border: 2px solid #444;
+            color: #333;
+        }
+
+        .ai-button {
+            background-color: #16A085;
+            color: white;
+            margin-top: 20px;
+        }
+
+        /* Selection screen styles */
+        .selection-text {
+            font-size: 20px;
+            font-weight: bold;
+            text-align: center;
+            color: #333;
+            margin-bottom: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 16px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 8px;
+        }
+
+        .form-group select {
+            width: 100%;
+            padding: 12px;
+            font-size: 16px;
+            border: 2px solid #444;
+            border-radius: 8px;
+            background-color: white;
+            cursor: pointer;
+        }
+
+        .start-btn {
+            background-color: #16A085;
+            color: white;
+            margin-top: 20px;
+        }
+
+        .next-btn {
+            background-color: #3498DB;
+            color: white;
+            margin-top: 15px;
+            display: none; /* Hidden by default */
+        }
+
+        .question-counter {
+            text-align: center;
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+
+        /* Answer feedback styles */
+        .answer-btn.correct {
+            background-color: #2ECC71;
+            border-color: #27AE60;
+            box-shadow: 0 0 20px rgba(46, 204, 113, 0.8);
+            color: white;
+        }
+
+        .answer-btn.incorrect {
+            background-color: #E74C3C;
+            border-color: #C0392B;
+            box-shadow: 0 0 20px rgba(231, 76, 60, 0.8);
+            color: white;
+        }
+
+        .answer-btn.disabled {
+            pointer-events: none;
+            opacity: 0.7;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="device-container">
+        <div class="screen">
+
+            <header class="app-header">
+                <h1>EduRasp</h1>
+            </header>
+
+            <div class="sub-header">
+                {% if show_selection %}
+                    Select Your Subject
+                {% else %}
+                    Grade {{ grade }} {{ subject }}
+                {% endif %}
+            </div>
+
+            <main class="content">
+                {% if show_selection %}
+                    <!-- Subject Selection Screen -->
+                    <p class="selection-text">Choose a subject to practice:</p>
+
+                    <form method="GET" action="{% url 'practice' %}">
+                        <div class="form-group">
+                            <label for="subject">Subject:</label>
+                            <select name="subject" id="subject" required>
+                                <option value="">-- Select Subject --</option>
+                                {% for subj in subjects %}
+                                    <option value="{{ subj }}">{{ subj }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <button type="submit" class="btn start-btn">Start Practice</button>
+                    </form>
+                {% else %}
+                    <!-- Question Screen -->
+                    <div class="question-counter">Question {{ question_number }} of {{ total_questions }}</div>
+
+                    <h2 class="question-text" id="questionText">{{ question.questionText }}</h2>
+
+                    <div class="answer-options">
+                        <button class="btn answer-btn" id="optionA">{{ question.optionA }}</button>
+                        <button class="btn answer-btn" id="optionB">{{ question.optionB }}</button>
+                        <button class="btn answer-btn" id="optionC">{{ question.optionC }}</button>
+                        <button class="btn answer-btn" id="optionD">{{ question.optionD }}</button>
+                    </div>
+
+                    <button class="btn ai-button">Ask AI Teacher</button>
+                    <button class="btn next-btn" onclick="loadNextQuestion()">Next Question</button>
+                {% endif %}
+            </main>
+
+        </div>
+    </div>
+
+    <script>
+        let answerSubmitted = false;
+
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+
+        // Add click handlers to answer buttons
+        document.addEventListener('DOMContentLoaded', function() {
+            const answerButtons = document.querySelectorAll('.answer-btn');
+            answerButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    if (!answerSubmitted) {
+                        const selectedAnswer = this.id.slice(-1); // Get A, B, C, or D
+                        checkAnswer(selectedAnswer, this);
+                    }
+                });
+            });
+        });
+
+        function checkAnswer(selectedAnswer, clickedButton) {
+            const csrftoken = getCookie('csrftoken');
+
+            fetch("{% url 'check_answer' %}", {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrftoken
+                },
+                body: JSON.stringify({ answer: selectedAnswer })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    answerSubmitted = true;
+
+                    // Disable all answer buttons
+                    const answerButtons = document.querySelectorAll('.answer-btn');
+                    answerButtons.forEach(btn => btn.classList.add('disabled'));
+
+                    // Highlight the correct answer with green glow
+                    const correctButton = document.getElementById('option' + data.correct_answer);
+                    correctButton.classList.add('correct');
+
+                    // If the user selected wrong answer, highlight it with red glow
+                    if (!data.is_correct) {
+                        clickedButton.classList.add('incorrect');
+                    }
+
+                    // Show the Next Question button
+                    document.querySelector('.next-btn').style.display = 'block';
+                }
+            })
+            .catch(error => console.error('Error:', error));
+        }
+
+        function loadNextQuestion() {
+            const csrftoken = getCookie('csrftoken');
+
+            fetch("{% url 'next_question' %}", {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrftoken
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Check if all questions are completed
+                    if (data.completed) {
+                        // Redirect to subject selection page
+                        window.location.href = data.redirect_url;
+                        return;
+                    }
+
+                    // Reset answer state
+                    answerSubmitted = false;
+
+                    // Remove all classes from answer buttons
+                    const answerButtons = document.querySelectorAll('.answer-btn');
+                    answerButtons.forEach(btn => {
+                        btn.classList.remove('correct', 'incorrect', 'disabled');
+                    });
+
+                    // Hide the Next Question button
+                    document.querySelector('.next-btn').style.display = 'none';
+
+                    // Update the question text and options
+                    document.getElementById('questionText').textContent = data.question.text;
+                    document.getElementById('optionA').textContent = data.question.optionA;
+                    document.getElementById('optionB').textContent = data.question.optionB;
+                    document.getElementById('optionC').textContent = data.question.optionC;
+                    document.getElementById('optionD').textContent = data.question.optionD;
+
+                    // Update question counter
+                    document.querySelector('.question-counter').textContent =
+                        `Question ${data.question_number} of ${data.total_questions}`;
+                }
+            })
+            .catch(error => console.error('Error:', error));
+        }
+    </script>
+</body>
+</html>
