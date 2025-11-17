@@ -135,11 +135,20 @@ def get_explanation(request):
             subject_map = {
                 'English': 'eng',
                 'Math': 'math',
+                'Mathematics': 'math',
                 'Science': 'sci'
             }
 
-            # Get the audio file prefix
-            audio_prefix = subject_map.get(subject, subject.lower()[:3])
+            # Get the audio file prefix - handle case-insensitive matching
+            audio_prefix = None
+            for key, value in subject_map.items():
+                if subject.lower() == key.lower():
+                    audio_prefix = value
+                    break
+
+            # Fallback to first 3 letters if no match found
+            if audio_prefix is None:
+                audio_prefix = subject.lower()[:3]
 
             # Create audio file path (question_number is current_index + 1)
             audio_filename = f"{audio_prefix}_{current_index + 1}.mp3"
@@ -150,7 +159,9 @@ def get_explanation(request):
                 'explanation': question.explanation,
                 'audio_url': audio_url,
                 'correct_answer': question.correctAnswer,
-                'correct_answer_text': question.get_correct_option_text()
+                'correct_answer_text': question.get_correct_option_text(),
+                'subject': subject,  # For debugging
+                'audio_prefix': audio_prefix  # For debugging
             })
 
     return JsonResponse({'success': False, 'error': 'Invalid request'})
