@@ -119,3 +119,38 @@ def next_question(request):
             })
 
     return JsonResponse({'success': False, 'error': 'Invalid request'})
+
+def get_explanation(request):
+    """API endpoint to get the explanation and audio for the current question"""
+    if request.method == 'GET':
+        question_ids = request.session.get('question_ids', [])
+        current_index = request.session.get('current_index', 0)
+        subject = request.session.get('subject', '')
+
+        if question_ids:
+            # Get the current question
+            question = Questions.objects.get(id=question_ids[current_index])
+
+            # Map subject names to audio file prefixes
+            subject_map = {
+                'English': 'eng',
+                'Math': 'math',
+                'Science': 'sci'
+            }
+
+            # Get the audio file prefix
+            audio_prefix = subject_map.get(subject, subject.lower()[:3])
+
+            # Create audio file path (question_number is current_index + 1)
+            audio_filename = f"{audio_prefix}_{current_index + 1}.mp3"
+            audio_url = f"/media/audio/explanations/{audio_filename}"
+
+            return JsonResponse({
+                'success': True,
+                'explanation': question.explanation,
+                'audio_url': audio_url,
+                'correct_answer': question.correctAnswer,
+                'correct_answer_text': question.get_correct_option_text()
+            })
+
+    return JsonResponse({'success': False, 'error': 'Invalid request'})
